@@ -1,0 +1,31 @@
+body{
+  background-color: black;
+  text-align: center;
+  color: white;
+  font-size: 30px;
+}
+
+h1{
+  font-size: 100px;	
+}
+
+a{
+  color: blue;
+}
+
+div{
+  margin-bottom: 50px;
+}
+
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+
+  justify-content: space-evenly;
+<!-- align items when they do not use all the space HORIZONTALLY -->
+
+  align-items: flex-start;
+<!-- align items when they do not use all the space VERTICALLY -->
+}
+
