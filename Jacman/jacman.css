@@ -1,6 +1,6 @@
 .cell{
-  width: 128px;
-  height: 128px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,10 +20,16 @@ body{
 
 #game-box{
   display: grid;
-  height: 1000px;
+  margin-top: 50px;
   place-content: center center;
-  grid-template-columns: repeat(9,128px);
-  grid-template-rows: repeat(8,128px;)
+  grid-template-columns: repeat(30 ,24px);
+  grid-template-rows: repeat(31 ,24px;)
+}
+
+h1{
+  color: white;
+  font-size: 50px;	
+  text-align: center;
 }
 
 
