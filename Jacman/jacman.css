@@ -1,0 +1,29 @@
+.cell{
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wall{
+  background-color: blue;
+}
+
+.path{
+  background-color: black;
+}
+
+body{
+  background-color:black;
+}
+
+#game-box{
+  display: grid;
+  height: 1000px;
+  place-content: center center;
+  grid-template-columns: repeat(9,128px);
+  grid-template-rows: repeat(8,128px;)
+}
+
+
