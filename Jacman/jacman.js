@@ -1,9 +1,10 @@
 //0- empty
 //1-pacman
 //2-pellet
-//3-ghost
+//3-big pellet
 //4-wall
-//5-tp-tile
+//5-ghost
+//6-cherry
 class Jacman{
     constructor(nX,nY) {
         this.xDirection = 0;
@@ -15,10 +16,8 @@ class Jacman{
     }
 
     setupJacSprite() {
-        const jacAnim = document.createElement("img");
+        const jacAnim = standardiseSprite();
         jacAnim.src = "sprites/jacman.gif";
-        jacAnim.style.width = "24px";
-        jacAnim.style.height = "auto";
         jacAnim.style.transform = "scaleX(-1)";
         return jacAnim;
     }
@@ -28,39 +27,40 @@ class Jacman{
     }
 
     moveUp() {
-        this.xDirection = -1;
-        this.yDirection = 0;
+        this.xDirection = 0;
+        this.yDirection = -1;
         this.resetSprite();
         this.JacSprite.style.transform = "rotate(90deg)";
     }
 
     moveDown() {
-        this.xDirection = 1;
-        this.yDirection = 0;
+        this.xDirection = 0;
+        this.yDirection = 1;
         this.resetSprite();
         this.JacSprite.style.transform = "rotate(270deg)";
     }
 
     moveLeft() {
-        this.xDirection = 0;
-        this.yDirection = -1;
+        this.xDirection = -1;
+        this.yDirection = 0;
         this.resetSprite();
         this.JacSprite.style.transform = "scaleX(1)";
     }
 
     moveRight() {
-        this.xDirection = 0;
-        this.yDirection = 1;
+        this.xDirection = 1;
+        this.yDirection = 0;
         this.resetSprite();
         this.JacSprite.style.transform = "scaleX(-1)";
     }
 }
 
-class Pellet{
-    constructor (nValue) {
-        this.value = nValue;
-    }
-
+function standardiseSprite()
+{
+    pSprite = document.createElement("img");
+    pSprite.style.width = "24px";
+    pSprite.style.height = "auto";
+    return pSprite;
 }
 function drawMap() {
 
@@ -69,20 +69,28 @@ function drawMap() {
         for (let j = 0; j < map[i].length; j++) {
             const newDiv = document.createElement("div");
             newDiv.classList.add("cell");
-            if (map[i][j] === 0 || map[i][j] === 5) {
+            if (map[i][j] === 0) {
                 newDiv.classList.add("path")
-            }
-            else if (map[i][j] === 1) {
-                newDiv.appendChild(jacmanObject.JacSprite.cloneNode(true));
             }
             else if (map[i][j] === 4) {
                 newDiv.classList.add("wall");
             }
+            else if (map[i][j] === 2) {
+                newDiv.appendChild(pelletSprite.cloneNode(true));
+            }
+            else if (map[i][j] === 3) {
+                newDiv.appendChild(bigPelletSprite.cloneNode(true));
+            }
+            else if (map[i][j] === 1) {
+                newDiv.appendChild(jacmanObject.JacSprite.cloneNode(true));
+            }
+            
 
             gameBox.appendChild(newDiv);
         }
 
     }
+    scoreDisplay.innerHTML = "SCORE: "+score;
 }
 
 function loadMap() {
@@ -109,7 +117,9 @@ function loadMap() {
                 }
             }
 
-            nMap[jacmanObject.xCoord][jacmanObject.yCoord] = 1;
+            nMap[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
+            document.getElementById("game-box").style.gridTemplateColumns = "repeat(" + nMap[0].length + ",24px)";
+            document.getElementById("game-box").style.gridTemplateRows = "repeat(" + nMap.length + ",24px)";
             
         })
 
@@ -139,20 +149,39 @@ function onKeyPress(event){
     }
 }
 
-function jacmanMove() {
-    if (map[jacmanObject.xCoord + jacmanObject.xDirection][jacmanObject.yCoord] === 5)
-    {
-        map[jacmanObject.xCoord][jacmanObject.yCoord] = 0;
-        jacmanObject.yCoord = (jacmanObject.yCoord + jacmanObject.yDirection) % (map[0].length-1);
-        map[jacmanObject.xCoord][jacmanObject.yCoord] = 1;
-    }
-    else if (map[jacmanObject.xCoord + jacmanObject.xDirection][jacmanObject.yCoord + jacmanObject.yDirection] != 4) {
-        map[jacmanObject.xCoord][jacmanObject.yCoord] = 0;
-        jacmanObject.xCoord += jacmanObject.xDirection;
-        jacmanObject.yCoord += jacmanObject.yDirection;
-        map[jacmanObject.xCoord][jacmanObject.yCoord] = 1;
-    }
+function jacmanMove()
+{
+    const newX = jacmanObject.xCoord + jacmanObject.xDirection, newY = jacmanObject.yCoord + jacmanObject.yDirection;
 
+    if (map[newY][newX] != 4) {
+        if (newX <= -1 || newX >= map[0].length)//loops around map
+        {
+            map[jacmanObject.yCoord][jacmanObject.xCoord] = 0;
+            jacmanObject.xCoord = (newX + map[0].length) % map[0].length;
+            map[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
+        }
+        else {
+
+            if (map[newY][newX] === 2)//pellet
+            {
+                score += 10;
+            }
+            else if (map[newY][newX] === 3)//big pellet
+            {
+                score += 50;
+            }
+
+            map[jacmanObject.yCoord][jacmanObject.xCoord] = 0;
+            jacmanObject.xCoord = newX;
+            jacmanObject.yCoord = newY;
+
+            //nothing happens for path
+
+            
+            map[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
+        }
+
+    }
     drawMap();
 }
 
@@ -162,10 +191,17 @@ function main() {
     drawMap();
 }
 
-const initJacX = 23, initJacY = 14;
+const initJacX = 14, initJacY = 23;
 let jacmanObject = new Jacman(initJacX, initJacY);
 
+const pelletSprite = standardiseSprite(); pelletSprite.src = "sprites/Pellet1.png";
+const bigPelletSprite = standardiseSprite(); bigPelletSprite.src = "sprites/Pellet2.png";
+let pelletCount = 0;
+
 let map = loadMap();
+
+let score = 0;
+const scoreDisplay = document.getElementById("score");
 
 let gameBox = document.getElementById("game-box");
 main();

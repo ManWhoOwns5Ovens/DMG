@@ -1,9 +1,14 @@
+@font-face {
+  font-family:myFont;
+  src: url("PublicPixel-rv0pA.ttf");
+}
 .cell{
   width: 24px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: black;
 }
 
 .wall{
@@ -16,20 +21,28 @@
 
 body{
   background-color:black;
+  font-family: myFont, monospace;
 }
 
 #game-box{
   display: grid;
-  margin-top: 50px;
   place-content: center center;
-  grid-template-columns: repeat(30 ,24px);
-  grid-template-rows: repeat(31 ,24px;)
+  grid-template-columns: repeat(28,24px);
+  grid-template-rows: repeat(31,24px;)
 }
 
-h1{
+#title{
   color: white;
   font-size: 50px;	
   text-align: center;
+}
+
+#score{
+  color: white;
+  margin-left: 600px;
+  margin-top: 50px;
+  font-size: 30px;
+  text-align: left;
 }
 
 
