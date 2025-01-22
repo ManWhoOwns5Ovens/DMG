@@ -27,8 +27,8 @@ body{
 #game-box{
   display: grid;
   place-content: center center;
-  grid-template-columns: repeat(28,24px);
-  grid-template-rows: repeat(31,24px;)
+  grid-template-columns: repeat(1,24px);
+  grid-template-rows: repeat(1,24px;)
 }
 
 #title{
@@ -39,10 +39,10 @@ body{
 
 #score{
   color: white;
-  margin-left: 600px;
+  margin-right: 400px;
   margin-top: 50px;
   font-size: 30px;
-  text-align: left;
+  text-align: center;
 }
 
 

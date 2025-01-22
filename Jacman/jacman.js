@@ -9,6 +9,8 @@ class Jacman{
     constructor(nX,nY) {
         this.xDirection = 0;
         this.yDirection = 0;
+        this.xPreviousDirection = 0;
+        this.yPreviousDirection = 0;
         this.xCoord = nX;
         this.yCoord = nY;
         this.originalJacSprite = this.setupJacSprite();
@@ -16,48 +18,56 @@ class Jacman{
     }
 
     setupJacSprite() {
-        const jacAnim = standardiseSprite();
-        jacAnim.src = "sprites/jacman.gif";
+        const jacAnim = standardiseSprite("sprites/jacman.gif");
         jacAnim.style.transform = "scaleX(-1)";
         return jacAnim;
     }
 
-    resetSprite() {
+    resetPrevious() {
+        this.xPreviousDirection = 0;
+        this.yPreviousDirection = 0;
+    }
+
+    changeSprite(modifier) {
         this.JacSprite = this.originalJacSprite;
+        this.JacSprite.style.transform = modifier;
     }
 
-    moveUp() {
-        this.xDirection = 0;
-        this.yDirection = -1;
-        this.resetSprite();
-        this.JacSprite.style.transform = "rotate(90deg)";
+    nextDirection() {
+        this.xPreviousDirection = this.xDirection;
+        this.yPreviousDirection = this.yDirection;
     }
 
-    moveDown() {
-        this.xDirection = 0;
-        this.yDirection = 1;
-        this.resetSprite();
-        this.JacSprite.style.transform = "rotate(270deg)";
-    }
-
-    moveLeft() {
-        this.xDirection = -1;
-        this.yDirection = 0;
-        this.resetSprite();
-        this.JacSprite.style.transform = "scaleX(1)";
-    }
-
-    moveRight() {
-        this.xDirection = 1;
-        this.yDirection = 0;
-        this.resetSprite();
-        this.JacSprite.style.transform = "scaleX(-1)";
+    changeDirection(nX, nY, modifier) {
+        this.nextDirection();
+        this.xDirection = nX;
+        this.yDirection = nY;
+        this.changeSprite(modifier);
     }
 }
 
-function standardiseSprite()
-{
+class Ghost {
+    constructor(nX, nY, xST,yST) {
+        this.xCoord = nX;
+        this.yCoord = nY;
+        this.xDirection = 0;
+        this.yDirection = 0;
+        this.scatterTarget = [xST, yST];
+        this.ghostSprite = standardiseSprite("sprites/Red_Ghost_GIF.gif");
+    }
+
+    startChase() {
+        target = [jacmanObject.xCoord, jacmanObject.yCoord]
+    }
+
+
+}
+
+class RedGhost extends Ghost{
+}
+function standardiseSprite(sourceLocation){
     pSprite = document.createElement("img");
+    pSprite.src = sourceLocation;
     pSprite.style.width = "24px";
     pSprite.style.height = "auto";
     return pSprite;
@@ -135,33 +145,39 @@ function loadMap() {
 function onKeyPress(event){
     switch (event.key) {
         case "ArrowUp":
-            jacmanObject.moveUp();
+            jacmanObject.changeDirection(0,-1,"rotate(90deg)");
             break;
         case "ArrowDown":
-            jacmanObject.moveDown();
+            jacmanObject.changeDirection(0,1,"rotate(270deg)");
             break;
         case "ArrowRight":
-            jacmanObject.moveRight();
+            jacmanObject.changeDirection(1,0,"scaleX(-1)");
             break;
         case "ArrowLeft":
-            jacmanObject.moveLeft();
+            jacmanObject.changeDirection(-1,0,"scaleX(1)");
             break;
     }
 }
 
-function jacmanMove()
-{
-    const newX = jacmanObject.xCoord + jacmanObject.xDirection, newY = jacmanObject.yCoord + jacmanObject.yDirection;
+function moveJac(nX,nY) { 
+    map[jacmanObject.yCoord][jacmanObject.xCoord]=0 ;
+    jacmanObject.xCoord = nX;
+    jacmanObject.yCoord = nY;
+    map[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
+}
+
+function jacmanMove() {
+    let newX = jacmanObject.xCoord + jacmanObject.xDirection;
+    let newY = jacmanObject.yCoord + jacmanObject.yDirection;
 
     if (map[newY][newX] != 4) {
+        jacmanObject.resetPrevious();
         if (newX <= -1 || newX >= map[0].length)//loops around map
         {
-            map[jacmanObject.yCoord][jacmanObject.xCoord] = 0;
-            jacmanObject.xCoord = (newX + map[0].length) % map[0].length;
-            map[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
+            newX = (newX + map[0].length) % map[0].length;
+            moveJac(newX, newY);
         }
         else {
-
             if (map[newY][newX] === 2)//pellet
             {
                 score += 10;
@@ -171,17 +187,23 @@ function jacmanMove()
                 score += 50;
             }
 
-            map[jacmanObject.yCoord][jacmanObject.xCoord] = 0;
-            jacmanObject.xCoord = newX;
-            jacmanObject.yCoord = newY;
+            moveJac(newX,newY);
 
             //nothing happens for path
-
-            
-            map[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
         }
-
     }
+    else if (map[newY][newX] === 4)
+    {
+        if (jacmanObject.xDirection + jacmanObject.xPreviousDirection == 0 || jacmanObject.yDirection + jacmanObject.yPreviousDirection == 0)
+        {
+            jacmanObject.resetPrevious();
+        }
+        newX = jacmanObject.xCoord + jacmanObject.xPreviousDirection;
+        newY = jacmanObject.yCoord + jacmanObject.yPreviousDirection;
+
+        moveJac(newX, newY);
+    }
+
     drawMap();
 }
 
@@ -194,8 +216,8 @@ function main() {
 const initJacX = 14, initJacY = 23;
 let jacmanObject = new Jacman(initJacX, initJacY);
 
-const pelletSprite = standardiseSprite(); pelletSprite.src = "sprites/Pellet1.png";
-const bigPelletSprite = standardiseSprite(); bigPelletSprite.src = "sprites/Pellet2.png";
+const pelletSprite = standardiseSprite("sprites/Pellet1.png");
+const bigPelletSprite = standardiseSprite("sprites/Pellet2.png"); 
 let pelletCount = 0;
 
 let map = loadMap();
