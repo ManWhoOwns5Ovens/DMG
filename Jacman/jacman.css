@@ -1,3 +1,13 @@
+body{
+  background-color:black;
+  font-family: myFont, monospace;
+}
+
+a{
+  color:white;
+  text-decoration:none;
+}
+
 @font-face {
   font-family:myFont;
   src: url("PublicPixel-rv0pA.ttf");
@@ -19,10 +29,6 @@
   background-color: black;
 }
 
-body{
-  background-color:black;
-  font-family: myFont, monospace;
-}
 
 #game-box{
   display: grid;
