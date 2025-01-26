@@ -4,74 +4,20 @@
 //3-big pellet
 //4-wall
 //5-ghost
-//6-cherry
-class Jacman{
-    constructor(nX,nY) {
-        this.xDirection = 0;
-        this.yDirection = 0;
-        this.xPreviousDirection = 0;
-        this.yPreviousDirection = 0;
-        this.xCoord = nX;
-        this.yCoord = nY;
-        this.originalJacSprite = this.setupJacSprite();
-        this.JacSprite = this.originalJacSprite;
-    }
-
-    setupJacSprite() {
-        const jacAnim = standardiseSprite("sprites/jacman.gif");
-        jacAnim.style.transform = "scaleX(-1)";
-        return jacAnim;
-    }
-
-    resetPrevious() {
-        this.xPreviousDirection = 0;
-        this.yPreviousDirection = 0;
-    }
-
-    changeSprite(modifier) {
-        this.JacSprite = this.originalJacSprite;
-        this.JacSprite.style.transform = modifier;
-    }
-
-    nextDirection() {
-        this.xPreviousDirection = this.xDirection;
-        this.yPreviousDirection = this.yDirection;
-    }
-
-    changeDirection(nX, nY, modifier) {
-        this.nextDirection();
-        this.xDirection = nX;
-        this.yDirection = nY;
-        this.changeSprite(modifier);
-    }
-}
-
-class Ghost {
-    constructor(nX, nY, xST,yST) {
-        this.xCoord = nX;
-        this.yCoord = nY;
-        this.xDirection = 0;
-        this.yDirection = 0;
-        this.scatterTarget = [xST, yST];
-        this.ghostSprite = standardiseSprite("sprites/Red_Ghost_GIF.gif");
-    }
-
-    startChase() {
-        target = [jacmanObject.xCoord, jacmanObject.yCoord]
-    }
+import Jacman from "./JacmanObject.js";
+import Ghost from "./Ghost.js";
 
 
-}
-
-class RedGhost extends Ghost{
-}
 function standardiseSprite(sourceLocation){
-    pSprite = document.createElement("img");
+    let pSprite = document.createElement("img");
     pSprite.src = sourceLocation;
     pSprite.style.width = "24px";
     pSprite.style.height = "auto";
     return pSprite;
 }
+
+function squared(x){return x*x;}
+
 function drawMap() {
 
     gameBox.innerHTML = "";
@@ -90,6 +36,9 @@ function drawMap() {
             }
             else if (map[i][j] === 3) {
                 newDiv.appendChild(bigPelletSprite.cloneNode(true));
+            }
+            else if (map[i][j] === 5) {
+                newDiv.appendChild(redGhostObject.ghostSprite.cloneNode(true));
             }
             else if (map[i][j] === 1) {
                 newDiv.appendChild(jacmanObject.JacSprite.cloneNode(true));
@@ -128,6 +77,7 @@ function loadMap() {
             }
 
             nMap[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
+            nMap[redGhostObject.yCoord][redGhostObject.xCoord]= 5;
             document.getElementById("game-box").style.gridTemplateColumns = "repeat(" + nMap[0].length + ",24px)";
             document.getElementById("game-box").style.gridTemplateRows = "repeat(" + nMap.length + ",24px)";
             
@@ -166,12 +116,12 @@ function moveJac(nX,nY) {
     map[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
 }
 
-function jacmanMove() {
+function jacmanMovement() {
     let newX = jacmanObject.xCoord + jacmanObject.xDirection;
     let newY = jacmanObject.yCoord + jacmanObject.yDirection;
 
     if (map[newY][newX] != 4) {
-        jacmanObject.resetPrevious();
+        jacmanObject.resetBuffers();
         if (newX <= -1 || newX >= map[0].length)//loops around map
         {
             newX = (newX + map[0].length) % map[0].length;
@@ -194,27 +144,114 @@ function jacmanMove() {
     }
     else if (map[newY][newX] === 4)
     {
-        if (jacmanObject.xDirection + jacmanObject.xPreviousDirection == 0 || jacmanObject.yDirection + jacmanObject.yPreviousDirection == 0)
-        {
-            jacmanObject.resetPrevious();
-        }
-        newX = jacmanObject.xCoord + jacmanObject.xPreviousDirection;
-        newY = jacmanObject.yCoord + jacmanObject.yPreviousDirection;
 
-        moveJac(newX, newY);
+        newX = jacmanObject.xCoord + jacmanObject.xBufferDirection;
+        newY = jacmanObject.yCoord + jacmanObject.yBufferDirection;
+
+        if (map[newY][newX] === 4) {
+            jacmanObject.resetBuffers();
+        }
+        else
+        {
+            moveJac(newX, newY);
+        }
+        
     }
 
     drawMap();
 }
 
-function main() {
+function moveGhost(ghostObject,nX,nY){
+    map[ghostObject.yCoord][ghostObject.xCoord]=ghostObject.onTop;
+    ghostObject.xCoord=nX;
+    ghostObject.yCoord=nY;
+    ghostObject.onTop=map[nY][nX];
+    map[nY][nX]=5;
+    checkForGameOver(ghostObject);
+}
+
+
+
+function checkForGameOver(ghostObject){
+    if(ghostObject.xCoord===jacmanObject.xCoord && ghostObject.yCoord===jacmanObject.yCoord)
+        {
+            console.log("GAME OVER");
+        }
+}
+
+function ghostMovement(ghostObject){
+    const specialTiles=[[11,12],[11,15],[23,12],[23,15]];
+    let newX=ghostObject.xCoord+ghostObject.xDirection;
+    let newY=ghostObject.yCoord+ghostObject.yDirection;
+
+    specialTiles.forEach(element => {
+        if(element[1]=== ghostObject.xCoord && element[0]=== ghostObject.yCoord)
+        {
+            moveGhost(ghostObject,newX,newY);
+            return;
+        }
+    });
+
+    const possibleDirections=[[1,0],[-1,0],[0,-1],[0,1]];//down,up,left,right
+    let validMoves=[];
+
+
+    for(let i=0; i< possibleDirections.length;i++)
+    {
+        if (typeof(map[possibleDirections[i][0]+ghostObject.yDirection]) !== 'undefined') {
+            if(map[possibleDirections[i][0]+ghostObject.yDirection][possibleDirections[i][1]+ghostObject.xDirection]!==4 ||
+                (possibleDirections[i][0]!==0-ghostObject.yDirection && possibleDirections[i][1]!== 0-ghostObject.xDirection))
+            {
+                validMoves.push(possibleDirections[i]);
+            }
+        }
+        
+    }
+
+    console.log(validMoves.length);
+
+    if(validMoves.length>1)
+    {
+        let temp1=squared(jacmanObject.yCoord-(ghostObject.yCoord+validMoves[0][0]))+squared(jacmanObject.xCoord-(ghostObject.xCoord+validMoves[0][1]));
+        let temp2=squared(jacmanObject.yCoord-(ghostObject.yCoord+validMoves[1][0]))+squared(jacmanObject.xCoord-(ghostObject.xCoord+validMoves[1][1]));
+
+        if(temp1>=temp2)
+        {
+            ghostObject.changeDirection(validMoves[0][1],validMoves[0][0]);
+            moveGhost(ghostObject,validMoves[0][1]+ghostObject.xCoord,validMoves[0][0]+ghostObject.yCoord);
+        }
+        else
+        {
+            ghostObject.changeDirection(validMoves[1][1],validMoves[1][0]);
+            moveGhost(ghostObject,validMoves[1][1]+ghostObject.xCoord,validMoves[1][0]+ghostObject.yCoord);
+        }
+    }
+    else if(typeof(validMoves[0])!=="undefined")
+    {
+        moveGhost(ghostObject,validMoves[0][1]+ghostObject.xCoord,validMoves[0][0]+ghostObject.yCoord);
+    }
+
+}
+
+function program() {
     document.addEventListener("keydown", onKeyPress);
-    setInterval(jacmanMove, 200);
+
+    redGhostObject.startChase(jacmanObject.yCoord,jacmanObject.xCoord);
+    setInterval(ghostMovement(redGhostObject),200);
+
+    setInterval(jacmanMovement, 200);
+
     drawMap();
 }
 
+let ghostMode="chase";
+
 const initJacX = 14, initJacY = 23;
 let jacmanObject = new Jacman(initJacX, initJacY);
+jacmanObject.setUpSprite(standardiseSprite("sprites/jacman.gif"));
+
+let redGhostObject= new Ghost(13,11);
+redGhostObject.setUpSprite(standardiseSprite("sprites/Red_Ghost_GIF.gif"));
 
 const pelletSprite = standardiseSprite("sprites/Pellet1.png");
 const bigPelletSprite = standardiseSprite("sprites/Pellet2.png"); 
@@ -226,4 +263,4 @@ let score = 0;
 const scoreDisplay = document.getElementById("score");
 
 let gameBox = document.getElementById("game-box");
-main();
+program();
