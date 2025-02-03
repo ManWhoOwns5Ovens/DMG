@@ -1,4 +1,4 @@
-export default class Jacman{
+class PacmanCharacter {
     constructor(nX,nY) {
         this.xDirection = 0;
         this.yDirection = 0;
@@ -38,4 +38,7 @@ export default class Jacman{
         this.originalJacSprite.style.transform="scaleX(-1)";
         this.JacSprite=this.originalJacSprite;
     }
+   
 }
+
+export default PacmanCharacter;

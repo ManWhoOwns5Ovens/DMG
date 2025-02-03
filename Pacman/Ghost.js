@@ -1,16 +1,18 @@
-export default class Ghost {
+class Ghost {
     constructor(nX, nY) {
         this.xCoord = nX;
         this.yCoord = nY;
         this.xDirection = -1;
         this.yDirection = 0;
-        this.target = [0, 0];
+        this.targetX=nX;
+        this.targetY=nY;
         this.onTop=0;
         this.ghostSprite = null;
     }
 
-    startChase(jacX,jacY) {
-        this.target = [jacY, jacX];
+    changeTarget(targetX,targetY) {
+        this.targetX=targetX;
+        this.targetY=targetY;
     }
 
     reverseDirection()
@@ -30,3 +32,5 @@ export default class Ghost {
         this.ghostSprite=nSprite;
     }
 }
+
+export default Ghost;

@@ -34,12 +34,12 @@ a{
   display: grid;
   place-content: center center;
   grid-template-columns: repeat(1,24px);
-  grid-template-rows: repeat(1,24px;)
+  grid-template-rows: repeat(1,24px);
 }
 
-#title{
+h1{
   color: white;
-  font-size: 50px;	
+  font-size: 50pt;	
   text-align: center;
 }
 
