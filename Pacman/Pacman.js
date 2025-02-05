@@ -18,6 +18,7 @@ function standardiseSprite(sourceLocation){
 
 function squared(x){return x*x;}
 
+
 function drawMap() {
 
     gameBox.innerHTML = "";
@@ -169,14 +170,16 @@ function jacmanMovement() {
 }
 
 function checkForGameOver(){
-    for(let i=0; i<allGhosts.length;i++)
-    {
-        if(allGhosts[i].xCoord===jacmanObject.xCoord && allGhosts[i].yCoord===jacmanObject.yCoord)
-            {
-                document.getElementById("game-box").style.display="none";
-                document.getElementById("game-box").appendChild=document.createElement("h1").innerHTML="GAME OVER";
-            }
-    }
+for(let i=0; i<allGhosts.length;i++)
+{
+    if(allGhosts[i].xCoord===jacmanObject.xCoord && allGhosts[i].yCoord===jacmanObject.yCoord)
+        {
+            document.getElementById("game-box").style.display="none";
+            document.getElementById("game-over").innerHTML="GAME OVER";
+            document.getElementById("restart-button").style.display="block";
+            document.getElementById("restart-button").onclick=function(){location.reload();};
+        }
+}
 }
 
 
