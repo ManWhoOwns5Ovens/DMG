@@ -1,11 +1,12 @@
 class Ghost {
-    constructor(nX, nY) {
-        this.xCoord = nX;
-        this.yCoord = nY;
+    constructor(xCoord,yCoord,ID) {
+        this.xCoord = xCoord;
+        this.yCoord = yCoord;
+        this.ID=ID;
         this.xDirection = -1;
         this.yDirection = 0;
-        this.targetX=nX;
-        this.targetY=nY;
+        this.targetX=xCoord;
+        this.targetY=yCoord;
         this.onTop=0;
         this.ghostSprite = null;
     }
