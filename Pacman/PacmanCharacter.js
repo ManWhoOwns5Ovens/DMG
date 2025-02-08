@@ -6,8 +6,8 @@ class PacmanCharacter {
         this.yBufferDirection = 0;
         this.xCoord = nX;
         this.yCoord = nY;
-        this.originalJacSprite = null;
-        this.JacSprite = null;
+        this.originalPacSprite = null;
+        this.PacSprite = null;
     }
 
     resetBuffers() {
@@ -16,8 +16,8 @@ class PacmanCharacter {
     }
 
     changeSprite(modifier) {
-        this.JacSprite = this.originalJacSprite;
-        this.JacSprite.style.transform = modifier;
+        this.PacSprite = this.originalPacSprite;
+        this.PacSprite.style.transform = modifier;
     }
 
     nextDirection() {
@@ -34,9 +34,9 @@ class PacmanCharacter {
 
     setUpSprite(nSprite)
     {
-        this.originalJacSprite=nSprite;
-        this.originalJacSprite.style.transform="scaleX(-1)";
-        this.JacSprite=this.originalJacSprite;
+        this.originalPacSprite=nSprite;
+        this.originalPacSprite.style.transform="scaleX(-1)";
+        this.PacSprite=this.originalPacSprite;
     }
    
 }

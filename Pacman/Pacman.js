@@ -40,11 +40,14 @@ function drawMap() {
                 case 3:
                     newDiv.appendChild(bigPelletSprite.cloneNode(true));
                     break;
-                case 5:
-                    newDiv.appendChild(redGhostObject.ghostSprite.cloneNode(true));
+                case 51:
+                    newDiv.appendChild(redGhost.ghostSprite.cloneNode(true));
+                    break;
+                case 52:
+                    newDiv.appendChild(pinkGhost.ghostSprite.cloneNode(true));
                     break;
                 case 1:
-                    newDiv.appendChild(jacmanObject.JacSprite.cloneNode(true));
+                    newDiv.appendChild(pacman.PacSprite.cloneNode(true));
                     break;
             }
 
@@ -79,8 +82,9 @@ function loadMap() {
                 }
             }
 
-            nMap[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
-            nMap[redGhostObject.yCoord][redGhostObject.xCoord]= 5;
+            nMap[pacman.yCoord][pacman.xCoord] = 1;
+            nMap[redGhost.yCoord][redGhost.xCoord]= 51;
+            nMap[pinkGhost.yCoord][pinkGhost.xCoord]= 52;
             document.getElementById("game-box").style.gridTemplateColumns = "repeat(" + nMap[0].length + ",24px)";
             document.getElementById("game-box").style.gridTemplateRows = "repeat(" + nMap.length + ",24px)";
 
@@ -91,51 +95,44 @@ function loadMap() {
         .catch(error => {
             console.error("Error loading the file:", error);
         });
-
-
-
-    
-    
 }
 function onKeyPress(event){
     switch (event.key) {
         case "ArrowUp":
-            jacmanObject.changeDirection(0,-1,"rotate(90deg)");
+            pacman.changeDirection(0,-1,"rotate(90deg)");
             break;
         case "ArrowDown":
-            jacmanObject.changeDirection(0,1,"rotate(270deg)");
+            pacman.changeDirection(0,1,"rotate(270deg)");
             break;
         case "ArrowRight":
-            jacmanObject.changeDirection(1,0,"scaleX(-1)");
+            pacman.changeDirection(1,0,"scaleX(-1)");
             break;
         case "ArrowLeft":
-            jacmanObject.changeDirection(-1,0,"scaleX(1)");
+            pacman.changeDirection(-1,0,"scaleX(1)");
             break;
     }
 }
 
-function moveJac(nX,nY) { 
-    if(map[jacmanObject.yCoord][jacmanObject.xCoord]!==5)
+function movePac(nX,nY) { 
+    if(map[pacman.yCoord][pacman.xCoord].toString().charAt(0)!=="5")
     {
-        map[jacmanObject.yCoord][jacmanObject.xCoord]=0 ;
-        jacmanObject.xCoord = nX;
-        jacmanObject.yCoord = nY;
-        map[jacmanObject.yCoord][jacmanObject.xCoord] = 1;
+        map[pacman.yCoord][pacman.xCoord]=0 ;
+        pacman.xCoord = nX;
+        pacman.yCoord = nY;
+        map[pacman.yCoord][pacman.xCoord] = 1;
     }
-    if(ghostMode==="chase"){redGhostObject.changeTarget(jacmanObject.xCoord,jacmanObject.yCoord);}
-    
 }
 
-function jacmanMovement() {
-    let newX = jacmanObject.xCoord + jacmanObject.xDirection;
-    let newY = jacmanObject.yCoord + jacmanObject.yDirection;
+function pacmanMovement() {
+    let newX = pacman.xCoord + pacman.xDirection;
+    let newY = pacman.yCoord + pacman.yDirection;
 
     if (map[newY][newX] != 4) {
-        jacmanObject.resetBuffers();
+        pacman.resetBuffers();
         if (newX <= -1 || newX >= map[0].length)//loops around map
         {
             newX = (newX + map[0].length) % map[0].length;
-            moveJac(newX, newY);
+            movePac(newX, newY);
         }
         else {
             if (map[newY][newX] === 2)//pellet
@@ -147,7 +144,7 @@ function jacmanMovement() {
                 score += 50;
             }
 
-            moveJac(newX,newY);
+            movePac(newX,newY);
 
             //nothing happens for path
         }
@@ -155,25 +152,25 @@ function jacmanMovement() {
     else if (map[newY][newX] === 4)
     {
 
-        newX = jacmanObject.xCoord + jacmanObject.xBufferDirection;
-        newY = jacmanObject.yCoord + jacmanObject.yBufferDirection;
+        newX = pacman.xCoord + pacman.xBufferDirection;
+        newY = pacman.yCoord + pacman.yBufferDirection;
 
         if (map[newY][newX] === 4) {
-            jacmanObject.resetBuffers();
+            pacman.resetBuffers();
         }
         else
         {
-            moveJac(newX, newY);
+            movePac(newX, newY);
         }
         
     }
 }
 
 function checkForGameOver(){
-for(let i=0; i<allGhosts.length;i++)
-{
-    if(allGhosts[i].xCoord===jacmanObject.xCoord && allGhosts[i].yCoord===jacmanObject.yCoord)
+for(let i=0; i<allGhosts.length;i++){
+    if(allGhosts[i].xCoord===pacman.xCoord && allGhosts[i].yCoord===pacman.yCoord)
         {
+            console.log("GAME OVER");
             document.getElementById("game-box").style.display="none";
             document.getElementById("game-over").innerHTML="GAME OVER";
             document.getElementById("restart-button").style.display="block";
@@ -193,9 +190,7 @@ function moveGhost(ghostObject,nX,nY){
     ghostObject.xCoord=nX;
     ghostObject.yCoord=nY;
     ghostObject.onTop=map[nY][nX];
-    map[nY][nX]=5;
-    ghostObject.changeTarget();
-    checkForGameOver(ghostObject);
+    map[nY][nX]=ghostObject.ID;
 }
 
 
@@ -256,59 +251,82 @@ function ghostMovement(ghostObject){
 
 }
 
-function modeSwitchTimer(){
-    if(ghostMode==="chase")
-    {
-        ghostMode="scatter";
-        changeToScatter();
-    }
-    else
-    {
-        ghostMode="chase";
-        //changeToChase();
+function keepGhostsChasingTarget(){
+    if(ghostMode==="chase"){
+        redGhost.changeTarget(pacman.xCoord,pacman.yCoord);
+        pinkGhost.changeTarget(pacman.xCoord+(pacman.xDirection*2), pacman.yCoord+(pacman.yDirection*2));
     }
 }
 
 function changeToChase(){
-    redGhostObject.changeTarget(jacmanObject.xCoord,jacmanObject.yCoord);
-    setTimeout(modeSwitchTimer, 20000);
+    ghostMode="chase";
+    console.log(ghostMode);
+    ghostCycle++;
+
+    setTimeout(changeToScatter, 20000);
 }
 
 function changeToScatter(){
-    redGhostObject.changeTarget(27,1);
-    setTimeout(modeSwitchTimer, 7000);
+    ghostMode="scatter";
+    console.log(ghostMode);
+    redGhost.changeTarget(1,1);
+    pinkGhost.changeTarget(27,1);
+
+    if(ghostCycle===3 || ghostCycle===4){setTimeout(changeToChase, 5000);}
+    else if(ghostCycle<5){setTimeout(changeToChase,7000);}
+    
+}
+
+function releaseGhost(ghost, time){
+    console.log("released");
+    map[ghost.yCoord][ghost.xCoord]=0;
+    ghost.xCoord=13;
+    ghost.yCoord=11;
+    map[11][13]=ghost.ID;
+    setInterval(ghostMovement(ghost), time);
 }
 
 
 function program() {
+    const TIME_BETWEEN_FRAMES= 200;
     loadMap().then(loadedMap => {
         map = loadedMap;
         document.addEventListener("keydown", onKeyPress);
 
-        setInterval(() => ghostMovement(redGhostObject), 250);
-        redGhostObject.changeTarget(jacmanObject.xCoord,jacmanObject.yCoord);
 
-        setInterval(jacmanMovement, 200);
+        setInterval(keepGhostsChasingTarget, TIME_BETWEEN_FRAMES+50);
+        let redGhostInterval=setInterval(() => ghostMovement(redGhost), TIME_BETWEEN_FRAMES+50);
+        
+        setInterval(checkForGameOver, TIME_BETWEEN_FRAMES);
 
-        setInterval(drawMap,200);
+        setInterval(pacmanMovement, TIME_BETWEEN_FRAMES);
 
-        changeToChase();
+        setInterval(drawMap,TIME_BETWEEN_FRAMES);
+
+        for(var i=1; i<allGhosts.length; i++){
+            setTimeout(function (){releaseGhost(allGhosts[i],TIME_BETWEEN_FRAMES+50);}, 5000+(i*5000));
+        }
+
+        changeToScatter();
     });
 }
 
 
 
 
-let ghostMode="chase";
+let ghostMode="scatter";
+let ghostCycle=1;
 
-const initJacX = 14, initJacY = 23;
-let jacmanObject = new PacmanCharacter(initJacX, initJacY);
-jacmanObject.setUpSprite(standardiseSprite("sprites/Pacman_Anim.gif"));
+const initPacX = 14, initPacY = 23;
+let pacman = new PacmanCharacter(initPacX, initPacY);
+pacman.setUpSprite(standardiseSprite("sprites/Pacman_Anim.gif"));
 
 
-let redGhostObject= new Ghost(13,11);
-redGhostObject.setUpSprite(standardiseSprite("sprites/Red_Ghost_GIF.gif"));
-const allGhosts=[redGhostObject];
+let redGhost= new Ghost(13,11,51);
+redGhost.setUpSprite(standardiseSprite("sprites/Red_Ghost.gif"));
+let pinkGhost= new Ghost(13,14,52); 
+pinkGhost.setUpSprite(standardiseSprite("sprites/Pink_Ghost.gif"));
+const allGhosts=[redGhost,pinkGhost];
 
 
 const pelletSprite = standardiseSprite("sprites/Pellet1.png");
