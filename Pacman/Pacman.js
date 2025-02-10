@@ -8,6 +8,9 @@ import PacmanCharacter from "./PacmanCharacter.js";
 import Ghost from "./Ghost.js";
 import RedGhost from "./RedGhost.js";
 
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
 
 function standardiseSprite(sourceLocation){
     let pSprite = document.createElement("img");
@@ -42,19 +45,25 @@ function drawMap() {
                     newDiv.appendChild(bigPelletSprite.cloneNode(true));
                     break;
                 case 51:
-                    newDiv.appendChild(redGhost.ghostSprite.cloneNode(true));
+                    if(isFrightened){newDiv.appendChild(scaredGhostSprite.cloneNode(true));}
+                    else{newDiv.appendChild(redGhost.ghostSprite.cloneNode(true));}
                     break;
                 case 52:
-                    newDiv.appendChild(pinkGhost.ghostSprite.cloneNode(true));
+                    if(isFrightened){newDiv.appendChild(scaredGhostSprite.cloneNode(true));}
+                    else{newDiv.appendChild(pinkGhost.ghostSprite.cloneNode(true));}
                     break;
                 case 53:
-                    newDiv.appendChild(blueGhost.ghostSprite.cloneNode(true));
+                    if(isFrightened){newDiv.appendChild(scaredGhostSprite.cloneNode(true));}
+                    else{newDiv.appendChild(blueGhost.ghostSprite.cloneNode(true));}
+                    break;
+                case 54:
+                    if(isFrightened){newDiv.appendChild(scaredGhostSprite.cloneNode(true));}
+                    else{newDiv.appendChild(orangeGhost.ghostSprite.cloneNode(true));}
                     break;
                 case 1:
                     newDiv.appendChild(pacman.PacSprite.cloneNode(true));
                     break;
             }
-
             gameBox.appendChild(newDiv);
         }
 
@@ -91,6 +100,7 @@ function loadMap() {
             nMap[redGhost.yCoord][redGhost.xCoord]= 51;
             nMap[pinkGhost.yCoord][pinkGhost.xCoord]= 52;
             nMap[blueGhost.yCoord][blueGhost.xCoord]= 53;
+            nMap[orangeGhost.yCoord][orangeGhost.xCoord]= 54;
             document.getElementById("game-box").style.gridTemplateColumns = "repeat(" + nMap[0].length + ",24px)";
             document.getElementById("game-box").style.gridTemplateRows = "repeat(" + nMap.length + ",24px)";
 
@@ -149,6 +159,7 @@ function pacmanMovement() {
             {
                 score += 50;
                 checkPellets();
+                changeToScared();
             }
             //nothing happens for path
         }
@@ -172,22 +183,30 @@ function pacmanMovement() {
 
 function checkForGameOver(){
 for(let i=0; i<allGhosts.length;i++){
-    if(allGhosts[i].xCoord===pacman.xCoord && allGhosts[i].yCoord===pacman.yCoord)
+    if(allGhosts[i].xCoord===pacman.xCoord && allGhosts[i].yCoord===pacman.yCoord && !isFrightened)
         {
-            console.log("GAME OVER");
-            document.getElementById("game-box").style.display="none";
-            document.getElementById("game-over").innerHTML="GAME OVER";
-            document.getElementById("restart-button").style.display="block";
-            document.getElementById("restart-button").onclick=function(){location.reload();};
+            loadFinalMessage("GAME OVER");
         }
 }
 }
+
+function loadFinalMessage(message){
+    console.log("GAME OVER");
+    document.getElementById("game-box").style.display="none";
+    document.getElementById("game-over").innerHTML=message;
+    document.getElementById("restart-button").style.display="block";
+    document.getElementById("restart-button").onclick=function(){location.reload();};
+}
+
 
 function checkPellets(){
     pelletsRemaining--;
     if(pelletsRemaining<=20){
         redGhost.isElroy=true;
         transformRedIntoElroy();
+    }
+    else if(pelletsRemaining<=0){
+        loadFinalMessage("YOU WON");
     }
 }
 
@@ -235,7 +254,7 @@ function ghostMovement(ghostObject){
     const possibleDirections=[[1,0],[-1,0],[0,-1],[0,1]];//down,up,left,right 
     let validMoves=ghostFindValidMoves(possibleDirections,ghostObject);
 
-    if(validMoves.length>1)
+    if(validMoves.length>1 && !isFrightened)
     {
         let temp1=squared(ghostObject.targetY-(ghostObject.yCoord+validMoves[0][0]))+squared(ghostObject.targetX-(ghostObject.xCoord+validMoves[0][1]));
         let temp2=squared(ghostObject.targetY-(ghostObject.yCoord+validMoves[1][0]))+squared(ghostObject.targetX-(ghostObject.xCoord+validMoves[1][1]));
@@ -252,22 +271,31 @@ function ghostMovement(ghostObject){
             moveGhost(ghostObject,validMoves[0][1]+ghostObject.xCoord,validMoves[0][0]+ghostObject.yCoord);
         }
     }
-    else if(typeof(validMoves[0])!=="undefined")
+    else if(!isFrightened)
     {
         ghostObject.changeDirection(validMoves[0][1],validMoves[0][0]);
         moveGhost(ghostObject,validMoves[0][1]+ghostObject.xCoord,validMoves[0][0]+ghostObject.yCoord);
+    }
+    else{ //scared
+        let rIndex= getRandomInt(validMoves.length);
+        ghostObject.changeDirection(validMoves[rIndex][1],validMoves[rIndex][0]);
+        moveGhost(ghostObject,validMoves[rIndex][1]+ghostObject.xCoord,validMoves[rIndex][0]+ghostObject.yCoord);
     }
 
 }
 
 function keepGhostsChasingTarget(){
-    if(ghostMode==="chase"){
+    if(ghostMode==="chase" && !isFrightened){
         redGhost.changeTarget(pacman.xCoord,pacman.yCoord);
         pinkGhost.changeTarget(pacman.xCoord+(pacman.xDirection*2), pacman.yCoord+(pacman.yDirection*2));
         
         const bX=(pacman.xCoord+(pacman.xDirection*2))-(redGhost.xCoord-(pacman.xCoord+(pacman.xDirection*2)));
         const bY=(pacman.yCoord+(pacman.yDirection*2))-(redGhost.yCoord-(pacman.yCoord+(pacman.yDirection*2)));
         blueGhost.changeTarget(bX, bY);
+
+        const dToPacman=Math.sqrt(squared(pacman.xCoord-orangeGhost.xCoord)+squared(pacman.yCoord-orangeGhost.xCoord));
+        if (dToPacman>=8){orangeGhost.changeTarget(pacman.xCoord,pacman.yCoord);}
+        else{orangeGhost.changeTarget(0,30);}
     }
 }
 
@@ -282,13 +310,22 @@ function changeToChase(){
 function changeToScatter(){
     ghostMode="scatter";
     console.log(ghostMode);
-    if(!redGhost.isElroy)redGhost.changeTarget(0,0);
-    pinkGhost.changeTarget(30,0);
-    blueGhost.changeTarget(0,30);
+    if(!redGhost.isElroy)redGhost.changeTarget(30,0);
+    pinkGhost.changeTarget(0,0);
+    blueGhost.changeTarget(30,30);
+    orangeGhost.changeTarget(0,30);
 
     if(ghostCycle===3 || ghostCycle===4){setTimeout(changeToChase, 5000);}
     else if(ghostCycle<5){setTimeout(changeToChase,7000);}
     
+}
+
+function changeToScared(){
+    isFrightened=!isFrightened;
+    if(isFrightened){
+        console.log("SCARED");
+        setTimeout(function(){changeToScared();}, 6000);
+    }
 }
 
 function releaseGhost(ghost, time){
@@ -335,12 +372,14 @@ function program() {
 const TIME_BETWEEN_FRAMES= 200;
 
 let ghostMode="scatter";
+let isFrightened=false;
 let ghostCycle=1;
 
 const initPacX = 14, initPacY = 23;
 let pacman = new PacmanCharacter(initPacX, initPacY);
 pacman.setUpSprite(standardiseSprite("sprites/Pacman_Anim.gif"));
 
+let scaredGhostSprite=standardiseSprite("sprites/Scared_Ghost.gif");
 
 let redGhost= new RedGhost(13,11,51);
 redGhost.setUpSprite(standardiseSprite("sprites/Red_Ghost.gif"));
@@ -349,10 +388,13 @@ let redGhostInterval;
 let pinkGhost= new Ghost(13,14,52); 
 pinkGhost.setUpSprite(standardiseSprite("sprites/Pink_Ghost.gif"));
 
-let blueGhost= new Ghost(14,14,53);
+let blueGhost= new Ghost(12,14,53);
 blueGhost.setUpSprite(standardiseSprite("sprites/Blue_Ghost.gif"));
 
-const allGhosts=[redGhost,pinkGhost,blueGhost];
+let orangeGhost= new Ghost(14,14,54);
+orangeGhost.setUpSprite(standardiseSprite("sprites/Orange_Ghost.gif"));
+
+const allGhosts=[redGhost,pinkGhost,blueGhost,orangeGhost];
 
 const pelletSprite = standardiseSprite("sprites/Pellet1.png");
 const bigPelletSprite = standardiseSprite("sprites/Pellet2.png"); 
