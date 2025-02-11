@@ -183,9 +183,22 @@ function pacmanMovement() {
 
 function checkForGameOver(){
 for(let i=0; i<allGhosts.length;i++){
-    if(allGhosts[i].xCoord===pacman.xCoord && allGhosts[i].yCoord===pacman.yCoord && !isFrightened)
+    if(allGhosts[i].xCoord===pacman.xCoord && allGhosts[i].yCoord===pacman.yCoord)
         {
-            loadFinalMessage("GAME OVER");
+            if(!isFrightened){
+                loadFinalMessage("GAME OVER");
+            }
+            else{
+                map[allGhosts[i].yCoord][allGhosts[i].xCoord]=1;
+                allGhosts[i].onTop=0;
+                allGhosts[i].xCoord=13;
+                allGhosts[i].yCoord=14;
+                map[14][13]=allGhosts[i].ID;
+                score+=200;
+                clearInterval(allGhostsIntervals[allGhosts[i].ID - 50 -1]);
+                setTimeout(function(){releaseGhost(allGhosts[i],TIME_BETWEEN_FRAMES+50);}, 5000);
+            }
+            
         }
 }
 }
@@ -201,6 +214,7 @@ function loadFinalMessage(message){
 
 function checkPellets(){
     pelletsRemaining--;
+    console.log(pelletsRemaining);
     if(pelletsRemaining<=20){
         redGhost.isElroy=true;
         transformRedIntoElroy();
@@ -216,7 +230,7 @@ function moveGhost(ghostObject,nX,nY){
     {
         nX = (nX + map[0].length) % map[0].length;
     }
-    if(ghostObject.onTop.toString().charAt(0)!="5"){map[ghostObject.yCoord][ghostObject.xCoord]=ghostObject.onTop;}
+    if(ghostObject.onTop.toString().charAt(0)!="5" || ghostObject.onTop===1){map[ghostObject.yCoord][ghostObject.xCoord]=ghostObject.onTop;}
     ghostObject.xCoord=nX;
     ghostObject.yCoord=nY;
     ghostObject.onTop=map[nY][nX];
@@ -334,12 +348,13 @@ function releaseGhost(ghost, time){
     ghost.xCoord=13;
     ghost.yCoord=11;
     map[11][13]=ghost.ID;
-    setInterval(function() {ghostMovement(ghost);}, time);
+    const newInterval=setInterval(function() {ghostMovement(ghost);}, time);
+    allGhostsIntervals[ghost.ID-50-1]= newInterval;
 }
 
 function transformRedIntoElroy(){
-    clearInterval(redGhostInterval);
-    redGhostInterval=setInterval(function(){ghostMovement(redGhost);}, TIME_BETWEEN_FRAMES-(((30-pelletsRemaining)/10)*50));
+    clearInterval(allGhostsIntervals[0]);
+    allGhostsIntervals[0]=setInterval(function(){ghostMovement(redGhost);}, TIME_BETWEEN_FRAMES-(((30-pelletsRemaining)/10)*50));
     console.log("ELROY");
 }
 
@@ -349,15 +364,15 @@ function program() {
         map = loadedMap;
         document.addEventListener("keydown", onKeyPress);
 
-
+        setInterval(drawMap,17);
         setInterval(keepGhostsChasingTarget, TIME_BETWEEN_FRAMES+50);
-        redGhostInterval=setInterval(() => ghostMovement(redGhost), TIME_BETWEEN_FRAMES+50);
+        allGhostsIntervals[0]=setInterval(function(){ghostMovement(redGhost);}, TIME_BETWEEN_FRAMES+50);
         
         
 
         setInterval(pacmanMovement, TIME_BETWEEN_FRAMES);
 
-        setInterval(drawMap,TIME_BETWEEN_FRAMES);
+        
 
         for(let i=1; i<allGhosts.length; i++){ // release ghosts
             setTimeout(function (){releaseGhost(allGhosts[i],TIME_BETWEEN_FRAMES+50);}, 5000+(i*5000));
@@ -383,7 +398,6 @@ let scaredGhostSprite=standardiseSprite("sprites/Scared_Ghost.gif");
 
 let redGhost= new RedGhost(13,11,51);
 redGhost.setUpSprite(standardiseSprite("sprites/Red_Ghost.gif"));
-let redGhostInterval;
 
 let pinkGhost= new Ghost(13,14,52); 
 pinkGhost.setUpSprite(standardiseSprite("sprites/Pink_Ghost.gif"));
@@ -395,6 +409,7 @@ let orangeGhost= new Ghost(14,14,54);
 orangeGhost.setUpSprite(standardiseSprite("sprites/Orange_Ghost.gif"));
 
 const allGhosts=[redGhost,pinkGhost,blueGhost,orangeGhost];
+let allGhostsIntervals=[];
 
 const pelletSprite = standardiseSprite("sprites/Pellet1.png");
 const bigPelletSprite = standardiseSprite("sprites/Pellet2.png"); 
